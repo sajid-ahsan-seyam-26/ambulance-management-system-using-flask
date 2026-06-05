@@ -33,6 +33,4 @@ python app.py
 http://127.0.0.1:5000
 ```
 
-## Fixed Error
-
-The dashboard was using `url_for('assign_ambulance')`, but the `assign_ambulance` route was missing from `app.py`. The route has been added, so ambulance dispatch now works properly.
+<img width="1798" height="765" alt="Image" src="https://github.com/user-attachments/assets/ee65a6f7-c07e-462a-991d-85dfb1d00ced" />
