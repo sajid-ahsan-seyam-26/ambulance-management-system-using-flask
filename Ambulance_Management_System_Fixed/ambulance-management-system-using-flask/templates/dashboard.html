@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmbuCare Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="dashboard-body">
+    <header class="top-header dashboard-header">
+        <div class="brand">
+            <div class="logo">+</div>
+            <div>
+                <h1>AmbuCare Control Room</h1>
+                <p>Admin & Driver Dispatch Dashboard</p>
+            </div>
+        </div>
+        <nav>
+            <a href="{{ url_for('index') }}">Request Ambulance</a>
+            <a href="{{ url_for('dashboard') }}" class="active">Admin Dashboard</a>
+        </nav>
+    </header>
+
+    <main class="dashboard-container">
+        <section class="stats-grid">
+            <div class="stat-card red-card">
+                <p>Total Requests</p>
+                <h2>{{ stats.total_requests }}</h2>
+            </div>
+            <div class="stat-card yellow-card">
+                <p>Pending</p>
+                <h2>{{ stats.pending_requests }}</h2>
+            </div>
+            <div class="stat-card blue-card">
+                <p>Dispatched</p>
+                <h2>{{ stats.dispatched_requests }}</h2>
+            </div>
+            <div class="stat-card green-card">
+                <p>Available Ambulances</p>
+                <h2>{{ stats.available_ambulances }}</h2>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Emergency Requests</h2>
+                    <p>Assign available ambulances and complete emergency cases.</p>
+                </div>
+                <a class="secondary-btn" href="{{ url_for('reset_demo') }}">Reset Demo</a>
+            </div>
+
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Patient</th>
+                            <th>Phone</th>
+                            <th>Location</th>
+                            <th>Condition</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in requests %}
+                        <tr>
+                            <td>#{{ req.id }}</td>
+                            <td>{{ req.patient }}</td>
+                            <td>{{ req.phone }}</td>
+                            <td>{{ req.location }}</td>
+                            <td>{{ req.condition }}</td>
+                            <td><span class="priority {{ req.priority|lower }}">{{ req.priority }}</span></td>
+                            <td><span class="status {{ req.status|lower }}">{{ req.status }}</span></td>
+                            <td>{{ req.assigned_ambulance }}</td>
+                            <td>
+                                {% if req.status == 'Pending' %}
+                                {% set available_ambulances = ambulances | selectattr('status', 'equalto', 'Available') | list %}
+                                {% if available_ambulances %}
+                                <form method="POST" action="{{ url_for('assign_ambulance', req_id=req.id) }}" class="assign-form">
+                                    <select name="ambulance_id" required>
+                                        {% for amb in available_ambulances %}
+                                            <option value="{{ amb.id }}">{{ amb.plate }} - {{ amb.driver }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="dispatch-btn">Dispatch</button>
+                                </form>
+                                {% else %}
+                                <span class="done-text">No ambulance available</span>
+                                {% endif %}
+                                {% elif req.status == 'Dispatched' %}
+                                <a href="{{ url_for('complete_request', req_id=req.id) }}" class="complete-btn">Complete</a>
+                                {% else %}
+                                <span class="done-text">Case Closed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-heading">
+                <div>
+                    <h2>Ambulance Fleet</h2>
+                    <p>Real-time ambulance availability and driver information.</p>
+                </div>
+            </div>
+
+            <div class="fleet-grid">
+                {% for amb in ambulances %}
+                <div class="ambulance-card {% if amb.status == 'Available' %}available-card{% else %}busy-card{% endif %}">
+                    <div class="ambulance-icon">🚑</div>
+                    <div class="ambulance-info">
+                        <h3>{{ amb.plate }}</h3>
+                        <p><strong>Driver:</strong> {{ amb.driver }}</p>
+                        <p><strong>Phone:</strong> {{ amb.phone }}</p>
+                        <p><strong>Type:</strong> {{ amb.type }}</p>
+                        <p><strong>Zone:</strong> {{ amb.zone }}</p>
+                        <span class="status {{ amb.status|lower }}">{{ amb.status }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
